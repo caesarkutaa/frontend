@@ -103,6 +103,8 @@ export interface PerfumeCard {
   inStock: boolean;
   isFeatured: boolean;
   totalSold: number;
+  ratingAverage?: number;
+  ratingCount?: number;
   createdAt: string;
 }
 
@@ -158,12 +160,7 @@ export interface Cart {
 
 /* =================== Orders & Payments =================== */
 export type PaymentMethod = 'bank_transfer' | 'paystack';
-export type PaymentStatus =
-  | 'pending'
-  | 'awaiting_confirmation'
-  | 'paid'
-  | 'rejected'
-  | 'refunded';
+export type PaymentStatus = 'pending' | 'awaiting_confirmation' | 'paid' | 'rejected' | 'refunded';
 export type OrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
 export interface BankAccount {

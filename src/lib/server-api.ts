@@ -1,6 +1,6 @@
 /**
- * For Server Components (public pages like the gallery & perfume detail),
- * so they render with real data for SEO. Calls NestJS directly.
+ * For Server Components (public pages). Calls NestJS directly.
+ * Every response is cache-tagged by resource so the backend can refresh it instantly.
  */
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:5000';
 
@@ -13,13 +13,22 @@ export class ApiError extends Error {
   }
 }
 
+/** /perfumes?x=1 -> ['perfumes'], /brands -> ['brands'], /settings/public -> ['settings'] */
+function tagsFor(path: string): string[] {
+  const resource = path.split('?')[0].split('/').filter(Boolean)[0];
+  return resource ? [resource] : [];
+}
+
 export async function serverFetch<T>(
   path: string,
-  options: { revalidate?: number; init?: RequestInit } = {},
+  options: { revalidate?: number; tags?: string[]; init?: RequestInit } = {},
 ): Promise<T> {
   const res = await fetch(`${BACKEND_URL}/api${path}`, {
     ...options.init,
-    next: { revalidate: options.revalidate ?? 60 },
+    next: {
+      revalidate: options.revalidate ?? 60,
+      tags: options.tags ?? tagsFor(path),
+    },
   });
 
   if (!res.ok) {

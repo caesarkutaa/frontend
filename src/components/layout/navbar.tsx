@@ -47,7 +47,7 @@ function Logo({ className }: { className?: string }) {
   );
 }
 
-export function Navbar() {
+export function Navbar({ announcement }: { announcement?: string | null }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, status, logout } = useAuthStore();
@@ -56,13 +56,11 @@ export function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close menus on route change
   useEffect(() => {
     setMobileOpen(false);
     setUserMenuOpen(false);
   }, [pathname]);
 
-  // Lock page scroll while the mobile drawer is open
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? 'hidden' : '';
     return () => {
@@ -70,7 +68,6 @@ export function Navbar() {
     };
   }, [mobileOpen]);
 
-  // Close user dropdown when clicking outside
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
@@ -93,13 +90,13 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-40 border-b-2 border-gold bg-navy">
-      {/* Announcement bar — gold */}
-      <div className="bg-gold px-4 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-navy sm:text-xs">
-        Free delivery on every order · 100% authentic
-      </div>
+      {announcement && (
+        <div className="bg-gold px-4 py-2 text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-navy sm:text-xs">
+          {announcement}
+        </div>
+      )}
 
       <nav className="container-page flex h-16 items-center justify-between gap-4 sm:h-20">
-        {/* Left: menu button (mobile) + logo */}
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -115,7 +112,6 @@ export function Navbar() {
           </Link>
         </div>
 
-        {/* Center: desktop links */}
         <ul className="hidden items-center gap-8 lg:flex">
           {NAV_LINKS.map((link) => (
             <li key={link.href}>
@@ -123,9 +119,7 @@ export function Navbar() {
                 href={link.href}
                 className={cn(
                   'border-b-2 py-1 text-xs font-medium uppercase tracking-[0.15em] transition-colors hover:text-gold',
-                  isActive(link.href)
-                    ? 'border-gold text-gold'
-                    : 'border-transparent text-white/85',
+                  isActive(link.href) ? 'border-gold text-gold' : 'border-transparent text-white/85',
                 )}
               >
                 {link.label}
@@ -134,7 +128,6 @@ export function Navbar() {
           ))}
         </ul>
 
-        {/* Right: actions */}
         <div className="flex items-center gap-1 sm:gap-2">
           <Link
             href="/perfumes?focus=search"
@@ -166,23 +159,14 @@ export function Navbar() {
                   </div>
                   <div className="py-1">
                     {isAdmin && (
-                      <Link
-                        href="/admin"
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gold-dark hover:bg-surface"
-                      >
+                      <Link href="/admin" className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gold-dark hover:bg-surface">
                         <LayoutDashboard size={16} /> Admin Panel
                       </Link>
                     )}
-                    <Link
-                      href="/account"
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-surface hover:text-gold-dark"
-                    >
+                    <Link href="/account" className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-surface hover:text-gold-dark">
                       <User size={16} /> My Account
                     </Link>
-                    <Link
-                      href="/orders"
-                      className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-surface hover:text-gold-dark"
-                    >
+                    <Link href="/orders" className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-surface hover:text-gold-dark">
                       <Package size={16} /> My Orders
                     </Link>
                     <button
@@ -197,11 +181,7 @@ export function Navbar() {
               )}
             </div>
           ) : (
-            <Link
-              href="/login"
-              aria-label="Log in"
-              className="flex h-10 items-center justify-center px-2 text-white hover:text-gold"
-            >
+            <Link href="/login" aria-label="Log in" className="flex h-10 items-center justify-center px-2 text-white hover:text-gold">
               <User size={20} className="sm:hidden" />
               <span className="hidden border border-gold px-4 py-2 text-xs font-semibold uppercase tracking-[0.15em] text-gold transition-colors hover:bg-gold hover:text-navy sm:inline">
                 Log in
@@ -213,18 +193,12 @@ export function Navbar() {
 
       {/* ============ Mobile drawer ============ */}
       <div
-        className={cn(
-          'fixed inset-0 z-50 lg:hidden',
-          mobileOpen ? 'pointer-events-auto' : 'pointer-events-none',
-        )}
+        className={cn('fixed inset-0 z-50 lg:hidden', mobileOpen ? 'pointer-events-auto' : 'pointer-events-none')}
         aria-hidden={!mobileOpen}
       >
         <div
           onClick={() => setMobileOpen(false)}
-          className={cn(
-            'absolute inset-0 bg-navy-dark/60 transition-opacity duration-300',
-            mobileOpen ? 'opacity-100' : 'opacity-0',
-          )}
+          className={cn('absolute inset-0 bg-navy-dark/60 transition-opacity duration-300', mobileOpen ? 'opacity-100' : 'opacity-0')}
         />
 
         <aside
@@ -252,9 +226,7 @@ export function Navbar() {
                   href={link.href}
                   className={cn(
                     'flex items-center border-b border-navy/5 px-5 py-4 text-sm font-semibold uppercase tracking-[0.15em]',
-                    isActive(link.href)
-                      ? 'border-l-4 border-l-gold bg-gold/15 text-navy'
-                      : 'text-navy hover:text-gold-dark',
+                    isActive(link.href) ? 'border-l-4 border-l-gold bg-gold/15 text-navy' : 'text-navy hover:text-gold-dark',
                   )}
                 >
                   {link.label}
@@ -270,10 +242,7 @@ export function Navbar() {
                   Signed in as <span className="font-semibold text-navy">{user.name}</span>
                 </p>
                 {isAdmin && (
-                  <Link
-                    href="/admin"
-                    className="flex items-center gap-3 py-2.5 text-sm font-medium text-gold-dark"
-                  >
+                  <Link href="/admin" className="flex items-center gap-3 py-2.5 text-sm font-medium text-gold-dark">
                     <LayoutDashboard size={16} /> Admin Panel
                   </Link>
                 )}
@@ -283,26 +252,16 @@ export function Navbar() {
                 <Link href="/orders" className="flex items-center gap-3 py-2.5 text-sm">
                   <Package size={16} /> My Orders
                 </Link>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="flex w-full items-center gap-3 py-2.5 text-left text-sm text-error"
-                >
+                <button type="button" onClick={handleLogout} className="flex w-full items-center gap-3 py-2.5 text-left text-sm text-error">
                   <LogOut size={16} /> Log out
                 </button>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                <Link
-                  href="/login"
-                  className="flex h-11 items-center justify-center border border-navy text-xs font-semibold uppercase tracking-wider text-navy"
-                >
+                <Link href="/login" className="flex h-11 items-center justify-center border border-navy text-xs font-semibold uppercase tracking-wider text-navy">
                   Log in
                 </Link>
-                <Link
-                  href="/register"
-                  className="flex h-11 items-center justify-center bg-navy text-xs font-semibold uppercase tracking-wider text-gold"
-                >
+                <Link href="/register" className="flex h-11 items-center justify-center bg-navy text-xs font-semibold uppercase tracking-wider text-gold">
                   Sign up
                 </Link>
               </div>

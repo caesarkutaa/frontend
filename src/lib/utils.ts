@@ -1,6 +1,11 @@
-/** Joins class names, skipping falsy values */
+import { twMerge } from 'tailwind-merge';
+
+/**
+ * Joins class names, skipping falsy values, and resolves Tailwind conflicts
+ * so the LAST class wins (e.g. 'text-navy' + 'text-gold' -> 'text-gold').
+ */
 export function cn(...classes: (string | false | null | undefined)[]): string {
-  return classes.filter(Boolean).join(' ');
+  return twMerge(classes.filter(Boolean).join(' '));
 }
 
 const nairaFormatter = new Intl.NumberFormat('en-NG', {

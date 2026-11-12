@@ -5,12 +5,8 @@ import { Spinner } from './spinner';
 type Variant = 'primary' | 'gold' | 'outline' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
-interface ButtonProps extends ComponentProps<'button'> {
-  variant?: Variant;
-  size?: Size;
-  loading?: boolean;
-  fullWidth?: boolean;
-}
+const base =
+  'inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wider transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50';
 
 const variants: Record<Variant, string> = {
   /** Navy with gold text — main call to action */
@@ -29,6 +25,28 @@ const sizes: Record<Size, string> = {
   lg: 'h-12 px-6 text-sm sm:h-14 sm:px-8 sm:text-base',
 };
 
+/** Use on <Link> to make it look exactly like a Button */
+export function buttonClasses({
+  variant = 'primary',
+  size = 'md',
+  fullWidth = false,
+  className,
+}: {
+  variant?: Variant;
+  size?: Size;
+  fullWidth?: boolean;
+  className?: string;
+} = {}) {
+  return cn(base, variants[variant], sizes[size], fullWidth && 'w-full', className);
+}
+
+interface ButtonProps extends ComponentProps<'button'> {
+  variant?: Variant;
+  size?: Size;
+  loading?: boolean;
+  fullWidth?: boolean;
+}
+
 export function Button({
   variant = 'primary',
   size = 'md',
@@ -44,14 +62,7 @@ export function Button({
     <button
       type={type}
       disabled={disabled || loading}
-      className={cn(
-        'inline-flex items-center justify-center gap-2 font-semibold uppercase tracking-wider',
-        'transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50',
-        variants[variant],
-        sizes[size],
-        fullWidth && 'w-full',
-        className,
-      )}
+      className={buttonClasses({ variant, size, fullWidth, className })}
       {...props}
     >
       {loading && <Spinner size="sm" />}

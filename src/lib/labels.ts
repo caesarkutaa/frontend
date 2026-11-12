@@ -1,4 +1,12 @@
-import type { Concentration, Gender, Longevity, Sillage } from '@/types';
+import type {
+  Concentration,
+  Gender,
+  Longevity,
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+  Sillage,
+} from '@/types';
 
 export const GENDER_LABELS: Record<Gender, string> = {
   men: 'Men',
@@ -34,7 +42,30 @@ export const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest' },
   { value: 'featured', label: 'Featured' },
   { value: 'best_selling', label: 'Best selling' },
+  { value: 'top_rated', label: 'Top rated' },
   { value: 'price_asc', label: 'Price: Low to high' },
   { value: 'price_desc', label: 'Price: High to low' },
   { value: 'name_asc', label: 'Name: A–Z' },
 ] as const;
+
+/* ---------- Orders & payments ---------- */
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  pending: 'Pending',
+  processing: 'Processing',
+  shipped: 'Shipped',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
+};
+
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  pending: 'Awaiting payment',
+  awaiting_confirmation: 'Under review',
+  paid: 'Paid',
+  rejected: 'Payment rejected',
+  refunded: 'Refunded',
+};
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  bank_transfer: 'Bank transfer',
+  paystack: 'Card / Paystack',
+};

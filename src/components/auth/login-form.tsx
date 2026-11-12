@@ -46,14 +46,10 @@ export function LoginForm() {
 
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-dark">
-        Welcome back
-      </p>
+      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-dark">Welcome back</p>
       <h1 className="mt-2 text-3xl font-medium sm:text-4xl">Log in</h1>
       <div className="mt-3 h-0.5 w-12 bg-gold" />
-      <p className="mt-3 text-sm text-navy/60">
-        Access your orders, saved address and faster checkout.
-      </p>
+      <p className="mt-3 text-sm text-navy/60">Access your orders, saved address and faster checkout.</p>
 
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-8 space-y-5">
         <Input
@@ -64,13 +60,23 @@ export function LoginForm() {
           error={errors.email?.message}
           {...register('email')}
         />
-        <PasswordInput
-          label="Password"
-          autoComplete="current-password"
-          placeholder="••••••••"
-          error={errors.password?.message}
-          {...register('password')}
-        />
+        <div>
+          <PasswordInput
+            label="Password"
+            autoComplete="current-password"
+            placeholder="••••••••"
+            error={errors.password?.message}
+            {...register('password')}
+          />
+          <div className="mt-2 text-right">
+            <Link
+              href="/forgot-password"
+              className="text-xs font-semibold text-navy underline decoration-gold decoration-2 underline-offset-4 hover:text-gold-dark"
+            >
+              Forgot password?
+            </Link>
+          </div>
+        </div>
 
         <Button type="submit" size="lg" fullWidth loading={isSubmitting}>
           Log in
