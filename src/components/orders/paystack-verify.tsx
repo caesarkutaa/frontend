@@ -14,18 +14,20 @@ const MAX_CHECKS = 6; // ~18 seconds of re-checking
 
 export function PaystackVerify({ orderId, reference }: { orderId: string; reference?: string }) {
   const queryClient = useQueryClient();
+  const queryKey = ['paystack-verify', reference];
 
   const query = useQuery({
-    queryKey: ['paystack-verify', reference],
+    queryKey,
     enabled: !!reference,
     retry: false,
     queryFn: async () =>
       (await api.get<PaystackVerifyResult>('/orders/paystack/verify', { params: { reference } })).data,
     // Webhook may arrive a few seconds later — keep checking
-    refetchInterval: (q) =>
-      q.state.data?.paid || q.state.dataUpdateCount >= MAX_CHECKS ? false : 3000,
+    refetchInterval: (q) => (q.state.data?.paid || q.state.dataUpdateCount >= MAX_CHECKS ? false : 3000),
   });
 
+  // How many times we've checked so far (re-renders on every fetch because useQuery is subscribed)
+  const checks = queryClient.getQueryState(queryKey)?.dataUpdateCount ?? 0;
   const paid = query.data?.paid;
 
   useEffect(() => {
@@ -38,24 +40,15 @@ export function PaystackVerify({ orderId, reference }: { orderId: string; refere
   if (!reference) {
     return (
       <StateMessage icon={CircleX} tone="error" title="Missing payment reference">
-        <Link href={`/orders/${orderId}`} className={buttonClasses({ size: 'lg' })}>
-          View order
-        </Link>
+        <Link href={`/orders/${orderId}`} className={buttonClasses({ size: 'lg' })}>View order</Link>
       </StateMessage>
     );
   }
 
   if (query.isError) {
     return (
-      <StateMessage
-        icon={CircleX}
-        tone="error"
-        title="We couldn’t verify this payment"
-        description={getErrorMessage(query.error)}
-      >
-        <Link href={`/orders/${orderId}`} className={buttonClasses({ size: 'lg' })}>
-          View order
-        </Link>
+      <StateMessage icon={CircleX} tone="error" title="We couldn’t verify this payment" description={getErrorMessage(query.error)}>
+        <Link href={`/orders/${orderId}`} className={buttonClasses({ size: 'lg' })}>View order</Link>
       </StateMessage>
     );
   }
@@ -68,17 +61,13 @@ export function PaystackVerify({ orderId, reference }: { orderId: string; refere
         title="Payment successful"
         description={`Thank you! Order ${query.data?.orderNumber} is confirmed and will be prepared for delivery.`}
       >
-        <Link href={`/orders/${orderId}`} className={buttonClasses({ size: 'lg' })}>
-          View order
-        </Link>
-        <Link href="/perfumes" className={buttonClasses({ variant: 'outline', size: 'lg' })}>
-          Continue shopping
-        </Link>
+        <Link href={`/orders/${orderId}`} className={buttonClasses({ size: 'lg' })}>View order</Link>
+        <Link href="/perfumes" className={buttonClasses({ variant: 'outline', size: 'lg' })}>Continue shopping</Link>
       </StateMessage>
     );
   }
 
-  const stillChecking = query.isLoading || query.dataUpdateCount < MAX_CHECKS;
+  const stillChecking = query.isLoading || checks < MAX_CHECKS;
 
   if (stillChecking) {
     return (
@@ -88,9 +77,7 @@ export function PaystackVerify({ orderId, reference }: { orderId: string; refere
         </span>
         <h1 className="mt-6 text-2xl font-medium sm:text-3xl">Confirming your payment…</h1>
         <div className="mx-auto mt-3 h-0.5 w-14 bg-gold" />
-        <p className="mt-4 max-w-md text-sm text-navy/65">
-          Please don’t close this page. This usually takes a few seconds.
-        </p>
+        <p className="mt-4 max-w-md text-sm text-navy/65">Please don’t close this page. This usually takes a few seconds.</p>
       </div>
     );
   }
@@ -102,12 +89,8 @@ export function PaystackVerify({ orderId, reference }: { orderId: string; refere
       title="Payment not confirmed yet"
       description="If money left your account, it will be confirmed automatically within a few minutes. Otherwise, you can try paying again."
     >
-      <Link href={`/orders/${orderId}`} className={buttonClasses({ size: 'lg' })}>
-        View order
-      </Link>
-      <Link href={`/orders/${orderId}/payment`} className={buttonClasses({ variant: 'gold', size: 'lg' })}>
-        Try again
-      </Link>
+      <Link href={`/orders/${orderId}`} className={buttonClasses({ size: 'lg' })}>View order</Link>
+      <Link href={`/orders/${orderId}/payment`} className={buttonClasses({ variant: 'gold', size: 'lg' })}>Try again</Link>
     </StateMessage>
   );
 }

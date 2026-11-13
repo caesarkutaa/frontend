@@ -14,12 +14,20 @@ import { OrderStatusBadge, PaymentStatusBadge } from '@/components/orders/status
 import { ActiveBadge, AdminTitle, ConfirmDialog, EmptyRow, ErrorBox, Panel, StatCard, TableHead, TableWrap, td } from './admin-ui';
 import type { AdminUserDetail } from '@/types/admin';
 
-type Action = null | 'block' | 'unblock' | 'make-admin' | 'make-customer';
+type Action = 'block' | 'unblock' | 'make-admin' | 'make-customer';
+
+interface DialogConfig {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  tone: 'primary' | 'gold' | 'danger';
+  reason?: { label: string; placeholder?: string; required?: boolean };
+}
 
 export function UserDetail({ userId }: { userId: string }) {
   const queryClient = useQueryClient();
   const me = useAuthStore((s) => s.user);
-  const [action, setAction] = useState<Action>(null);
+  const [action, setAction] = useState<Action | null>(null);
   const key = ['admin-user', userId];
 
   const { data, isLoading, isError, error } = useQuery({
@@ -28,7 +36,7 @@ export function UserDetail({ userId }: { userId: string }) {
   });
 
   const mutation = useMutation({
-    mutationFn: async ({ type, reason }: { type: Exclude<Action, null>; reason: string }) => {
+    mutationFn: async ({ type, reason }: { type: Action; reason: string }) => {
       if (type === 'block') return api.patch(`/admin/users/${userId}/block`, reason ? { reason } : {});
       if (type === 'unblock') return api.patch(`/admin/users/${userId}/unblock`);
       return api.patch(`/admin/users/${userId}/role`, { role: type === 'make-admin' ? 'admin' : 'customer' });
@@ -48,11 +56,32 @@ export function UserDetail({ userId }: { userId: string }) {
   const { user, stats, recentOrders } = data;
   const isSelf = me?.id === user._id;
 
-  const dialogs = {
-    block: { title: `Block ${user.name}?`, message: 'They will be logged out immediately and won’t be able to log in or place orders.', confirmLabel: 'Block user', tone: 'danger' as const, reason: { label: 'Reason', placeholder: 'e.g. Fake payment proofs' } },
-    unblock: { title: `Unblock ${user.name}?`, message: 'They will be able to log in and order again.', confirmLabel: 'Unblock', tone: 'gold' as const },
-    'make-admin': { title: 'Make this user an admin?', message: 'Admins can manage products, orders, payments and users.', confirmLabel: 'Make admin', tone: 'primary' as const },
-    'make-customer': { title: 'Remove admin access?', message: 'This user will become a regular customer.', confirmLabel: 'Make customer', tone: 'danger' as const },
+  const dialogs: Record<Action, DialogConfig> = {
+    block: {
+      title: `Block ${user.name}?`,
+      message: 'They will be logged out immediately and won’t be able to log in or place orders.',
+      confirmLabel: 'Block user',
+      tone: 'danger',
+      reason: { label: 'Reason', placeholder: 'e.g. Fake payment proofs' },
+    },
+    unblock: {
+      title: `Unblock ${user.name}?`,
+      message: 'They will be able to log in and order again.',
+      confirmLabel: 'Unblock',
+      tone: 'gold',
+    },
+    'make-admin': {
+      title: 'Make this user an admin?',
+      message: 'Admins can manage products, orders, payments and users.',
+      confirmLabel: 'Make admin',
+      tone: 'primary',
+    },
+    'make-customer': {
+      title: 'Remove admin access?',
+      message: 'This user will become a regular customer.',
+      confirmLabel: 'Make customer',
+      tone: 'danger',
+    },
   };
   const dialog = action ? dialogs[action] : null;
 
@@ -64,7 +93,15 @@ export function UserDetail({ userId }: { userId: string }) {
         actions={
           <>
             <ActiveBadge active={user.isActive} inactiveLabel="Blocked" />
-            <span className={user.role === 'admin' ? 'bg-gold px-2 py-0.5 text-[10px] font-bold uppercase text-navy' : 'border border-navy/20 px-2 py-0.5 text-[10px] font-semibold uppercase'}>{user.role}</span>
+            <span
+              className={
+                user.role === 'admin'
+                  ? 'bg-gold px-2 py-0.5 text-[10px] font-bold uppercase text-navy'
+                  : 'border border-navy/20 px-2 py-0.5 text-[10px] font-semibold uppercase'
+              }
+            >
+              {user.role}
+            </span>
           </>
         }
       />
@@ -80,7 +117,11 @@ export function UserDetail({ userId }: { userId: string }) {
         <StatCard tone="navy" label="Total spent" value={formatNaira(stats.totalSpent)} icon={Wallet} />
         <StatCard tone="gold" label="Orders" value={stats.totalOrders} hint={`${stats.paidOrders} paid`} icon={ShoppingCart} />
         <StatCard label="Pending payments" value={stats.pendingPayments} />
-        <StatCard label="Cancelled" value={stats.cancelledOrders} hint={stats.lastOrderAt ? `Last order ${formatDate(stats.lastOrderAt)}` : 'No orders yet'} />
+        <StatCard
+          label="Cancelled"
+          value={stats.cancelledOrders}
+          hint={stats.lastOrderAt ? `Last order ${formatDate(stats.lastOrderAt)}` : 'No orders yet'}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -96,7 +137,9 @@ export function UserDetail({ userId }: { userId: string }) {
                   <td className={`${td} font-semibold`}>{formatNaira(o.total)}</td>
                   <td className={td}><PaymentStatusBadge status={o.paymentStatus} /></td>
                   <td className={td}><OrderStatusBadge status={o.orderStatus} /></td>
-                  <td className={td}><Link href={`/admin/orders/${o._id}`} className="text-xs font-semibold uppercase text-gold-dark hover:text-navy">Open</Link></td>
+                  <td className={td}>
+                    <Link href={`/admin/orders/${o._id}`} className="text-xs font-semibold uppercase text-gold-dark hover:text-navy">Open</Link>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -111,8 +154,15 @@ export function UserDetail({ userId }: { userId: string }) {
             </dl>
             {user.address && (
               <address className="mt-4 border-t border-navy/10 pt-4 text-sm not-italic leading-relaxed">
-                <span className="text-xs font-bold uppercase tracking-wider text-gold-dark">Saved address</span><br />
-                {user.address.fullName}<br />{user.address.street}<br />{user.address.city}, {user.address.state}<br />{user.address.phone}
+                <span className="text-xs font-bold uppercase tracking-wider text-gold-dark">Saved address</span>
+                <br />
+                {user.address.fullName}
+                <br />
+                {user.address.street}
+                <br />
+                {user.address.city}, {user.address.state}
+                <br />
+                {user.address.phone}
               </address>
             )}
           </Panel>
@@ -124,16 +174,37 @@ export function UserDetail({ userId }: { userId: string }) {
             ) : (
               <div className="mt-4 flex flex-col gap-2">
                 {user.isActive ? (
-                  <Button variant="danger" fullWidth disabled={user.role === 'admin'} onClick={() => setAction('block')}><Ban size={16} /> Block user</Button>
+                  <Button variant="danger" fullWidth disabled={user.role === 'admin'} onClick={() => setAction('block')}>
+                    <Ban size={16} /> Block user
+                  </Button>
                 ) : (
-                  <Button variant="gold" fullWidth onClick={() => setAction('unblock')}><ShieldCheck size={16} /> Unblock user</Button>
+                  <Button variant="gold" fullWidth onClick={() => setAction('unblock')}>
+                    <ShieldCheck size={16} /> Unblock user
+                  </Button>
                 )}
                 {user.role === 'customer' ? (
-                  <Button variant="outline" fullWidth className="border-gold text-gold hover:bg-gold hover:text-navy" disabled={!user.isActive} onClick={() => setAction('make-admin')}><UserCog size={16} /> Make admin</Button>
+                  <Button
+                    variant="outline"
+                    fullWidth
+                    className="border-gold text-gold hover:bg-gold hover:text-navy"
+                    disabled={!user.isActive}
+                    onClick={() => setAction('make-admin')}
+                  >
+                    <UserCog size={16} /> Make admin
+                  </Button>
                 ) : (
-                  <Button variant="outline" fullWidth className="border-gold text-gold hover:bg-gold hover:text-navy" onClick={() => setAction('make-customer')}><UserCog size={16} /> Make customer</Button>
+                  <Button
+                    variant="outline"
+                    fullWidth
+                    className="border-gold text-gold hover:bg-gold hover:text-navy"
+                    onClick={() => setAction('make-customer')}
+                  >
+                    <UserCog size={16} /> Make customer
+                  </Button>
                 )}
-                {user.role === 'admin' && <p className="text-xs text-white/60">Admins must be changed to customer before they can be blocked.</p>}
+                {user.role === 'admin' && (
+                  <p className="text-xs text-white/60">Admins must be changed to customer before they can be blocked.</p>
+                )}
               </div>
             )}
           </section>
@@ -149,7 +220,7 @@ export function UserDetail({ userId }: { userId: string }) {
           message={dialog.message}
           confirmLabel={dialog.confirmLabel}
           tone={dialog.tone}
-          reason={'reason' in dialog ? dialog.reason : undefined}
+          reason={dialog.reason}
           loading={mutation.isPending}
           onClose={() => setAction(null)}
           onConfirm={(reason) => action && mutation.mutate({ type: action, reason })}
